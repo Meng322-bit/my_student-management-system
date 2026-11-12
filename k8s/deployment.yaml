@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-register-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-register
+  template:
+    metadata:
+      labels:
+        app: gateway-register
+    spec:
+      containers:
+        - name: api-gateway
+          image: meng2bit/api-gateway:v1
+          ports:
+            - containerPort: 3000
+          env:
+            - name: REGISTER_URL
+              value: "http://localhost:5001"
+            - name: STUDENT_URL
+              value: "http://student-service:5002"
+        - name: register-service
+          image: meng2bit/register-service:v2
+          ports:
+            - containerPort: 5001
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGO_URI
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: student-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: student
+  template:
+    metadata:
+      labels:
+        app: student
+    spec:
+      containers:
+        - name: student-service
+          image: meng2bit/student-service:v1
+          ports:
+            - containerPort: 5002
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGO_URI
